@@ -55,6 +55,8 @@ class MainWindow(QtGui.QMainWindow):
         self.createActions()
         self.createMenus()
         self.createToolbar()
+        
+        self.resize(500,400)
 #       self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
 #                                       first_band = "AT^SCFG=radio/band,8,8",
 #                                      second_band = "AT^SCFG=radio/band,4,12")
