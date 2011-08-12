@@ -8,6 +8,7 @@ import copy
 sip.setapi('QVariant', 2)
 
 from PyQt4 import QtCore, QtGui
+from PyQt4 import Qt
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 from PyQt4.QtGui import QAction, QIcon
@@ -36,6 +37,23 @@ class SerialCommunicationThread(QtCore.QThread):
           linia = self.socket.readline()
           QtCore.qDebug(linia)
           self.emit(QtCore.SIGNAL("newData"), bytes.decode(linia))
+
+class AddButtonWidget(QtGui.QWidget):
+    def __init__(self):
+        super(QtGui.QWidget, self).__init__()
+        self.buttonName = QtGui.QLineEdit()
+        self.buttonCommand = QtGui.QLineEdit()
+        self.layout = QtGui.QHBoxLayout()
+        self.layout.addWidget(self.buttonName)
+        self.layout.addWidget(self.buttonCommand)
+        self.setLayout(self.layout)
+        self.setWindowModality(QtCore.Qt.WindowModal)
+
+    def getButtonName(self):
+        return self.buttonName.text()
+
+    def getButtonCommand(self):
+        return self.buttonCommand.text()
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -68,6 +86,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
+        self.fileToolBar.addAction(self.atAct)
+        self.fileToolBar.addAction(self.modelAct)
+        self.fileToolBar.addAction(self.pinAct)
         self.fileToolBar.addAction(self.moniAct)
 
     def createCentralWidget(self):
@@ -88,21 +109,37 @@ class MainWindow(QtGui.QMainWindow):
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("File")
-        self.fileMenu.addAction(self.moniAct)
         self.fileMenu.addAction(self.quitAct)
+
+        self.toolbarMenu = self.menuBar().addMenu("Toolbar")
+        self.toolbarMenu.addAction(self.addButtonAct)
 
     def createShortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.shortcut.activated.connect(self.openFile)
 
     def createActions(self):
+        # HOW TO TRIGGER WITH SPECYFIC DATA?
         self.moniAct = QAction("at^moni", self, shortcut=QKeySequence.New, 
                        triggered=self.sendMoni)
+        self.pinAct = QAction("at+cpin=9999", self, triggered=self.sendPin)
+        self.atAct = QAction("at", self, triggered=self.sendAt)
+        self.modelAct = QAction("model", self,  triggered=self.sendModel)
 
-        self.quitAct = QAction("Quit", self, triggered=QtGui.qApp.quit)
+        self.addButtonAct = QAction("Add Button", self,triggered=self.addButton)
+
+        self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
+                                                 triggered=QtGui.qApp.quit)
         
     def openFile(self):
         QtCore.qDebug("Hello From Open FIle")
+
+    def addButton(self):
+        addButtonWidget = AddButtonWidget()
+        #addButtonWidget.setWindowModality(QtCore.Qt.WindowModal)
+        addButtonWidget.resize(200,200)
+        addButtonWidget.show()
+        QtCore.qDebug("Hello From Add Button")
 
     def readNewData(self, data):
         data = data.strip()
@@ -120,6 +157,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def sendMoni(self):
         self.socket.write(str.encode("at^moni") + b"\r\n")
+    def sendPin(self):
+        self.socket.write(str.encode("at+pin=9999") + b"\r\n")
+    def sendAt(self):
+        self.socket.write(str.encode("at") + b"\r\n")
+    def sendModel(self):
+        self.socket.write(str.encode("at^siekret=1") + b"\r\n")
 
 
 #   def playSequence(self):
