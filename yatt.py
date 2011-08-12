@@ -10,6 +10,7 @@ sip.setapi('QVariant', 2)
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
+from PyQt4.QtGui import QAction, QIcon
 
 
 def radioBand(preferred, allowed):
@@ -36,61 +37,76 @@ class SerialCommunicationThread(QtCore.QThread):
           QtCore.qDebug(linia)
           self.emit(QtCore.SIGNAL("newData"), bytes.decode(linia))
 
-class MainWindow(QtGui.QWidget):
+class MainWindow(QtGui.QMainWindow):
     def __init__(self):
-        super(QtGui.QWidget, self).__init__()
+        super(QtGui.QMainWindow, self).__init__()
 
         QtGui.QApplication.setStyle(QtGui.QStyleFactory.create("Plastique"));
-        self.setWindowTitle("Mini Yatt Player")
+        self.setWindowTitle("Mini Yatt")
+        
+        self.setupSocketThread()
+        self.createCentralWidget()
 
+
+        self.lineEdit.returnPressed.connect(self.sendData)
+        self.connect(self.thread, QtCore.SIGNAL("newData"), self.readNewData)
+				
+        self.createShortcuts()
+        self.createActions()
+        self.createMenus()
+        self.createToolbar()
+#       self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
+#                                       first_band = "AT^SCFG=radio/band,8,8",
+#                                      second_band = "AT^SCFG=radio/band,4,12")
+#       self.playSequence();
+
+        self.commands = copy.deepcopy(scenarios['cmu850'])
+
+        self.lineEdit.setText(self.commands[0])
+
+    def createToolbar(self):
+        self.fileToolBar = self.addToolBar("ATCommands Toolbar")
+        self.fileToolBar.addAction(self.moniAct)
+
+    def createCentralWidget(self):
+        centralWidget = QWidget()
+        self.setCentralWidget(centralWidget)
+
+        self.lineEdit = QtGui.QLineEdit()
+        self.textEdit = QtGui.QTextEdit()
+        self.layout = QtGui.QVBoxLayout()
+        self.layout.addWidget(self.lineEdit)
+        self.layout.addWidget(self.textEdit)
+        centralWidget.setLayout(self.layout)
+
+    def setupSocketThread (self):
         self.socket = serial.Serial(3,115200)
         self.thread = SerialCommunicationThread(self.socket)
         self.thread.start()
 
-        self.textEdit = QtGui.QLineEdit()
-        self.textEdit2 = QtGui.QTextEdit()
-        self.layout = QtGui.QVBoxLayout()
-        self.layout.addWidget(self.textEdit)
-        self.layout.addWidget(self.textEdit2)
-        self.setLayout(self.layout)
+    def createMenus(self):
+        self.fileMenu = self.menuBar().addMenu("File")
+        self.fileMenu.addAction(self.moniAct)
+        self.fileMenu.addAction(self.quitAct)
 
-        self.textEdit.returnPressed.connect(self.sendData)
-        self.connect(self.thread, QtCore.SIGNAL("newData"), self.readNewData)
-				
-        self.createShortcuts()
-
-#        self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
-#                                        first_band = "AT^SCFG=radio/band,8,8",
-#                                       second_band = "AT^SCFG=radio/band,4,12")
-#        self.playSequence();
-
-        self.commands = copy.deepcopy(scenarios['cmu850'])
-
-        #self.commands.append("AT^SCFG=Radio/Band,4,4")
-        #self.commands.append("AT+CPIN=9999")
-        #self.commands.append("AT+CMEE=2")
-        #self.commands.append("AT^SCFG=Radio/Band,8,12")
-        #self.commands.append("AT^SCFG=Radio/Band,4,4")
-        #self.commands.append("AT^SCFG=Radio/Band,4,12")
-
-        self.textEdit.setText(self.commands[0])
-
-#    def playSequence(self):
-#        #here comes all the logic
-#        self.sequence.play();
- 
     def createShortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.shortcut.activated.connect(self.openFile)
 
+    def createActions(self):
+        self.moniAct = QAction("at^moni", self, shortcut=QKeySequence.New, 
+                       triggered=self.sendMoni)
+
+        self.quitAct = QAction("Quit", self, triggered=QtGui.qApp.quit)
+        
     def openFile(self):
         QtCore.qDebug("Hello From Open FIle")
 
     def readNewData(self, data):
         data = data.strip()
-        self.textEdit2.append(data)
+        self.textEdit.append(data)
         #self.textEdit2.append("\n")
-        self.textEdit2.moveCursor(QtGui.QTextCursor.End)
+        self.textEdit.moveCursor(QtGui.QTextCursor.End)
 
     def sendData(self):
         QtCore.qDebug("sendData odpalone!")
@@ -98,10 +114,15 @@ class MainWindow(QtGui.QWidget):
         #self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
         msg = self.commands.pop(0)
         self.socket.write(str.encode(msg) + b"\r\n")
-        self.textEdit.setText(self.commands[0])
+        self.lineEdit.setText(self.commands[0])
+
+    def sendMoni(self):
+        self.socket.write(str.encode("at^moni") + b"\r\n")
 
 
-#str.encode(self.textEdit.text())
+#   def playSequence(self):
+#       #here comes all the logic
+#       self.sequence.play();
 
 
 if __name__ == '__main__':
