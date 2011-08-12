@@ -3,6 +3,7 @@
 import sip
 import sys
 import serial
+import copy
 
 sip.setapi('QVariant', 2)
 
@@ -10,6 +11,19 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 
+
+def radioBand(preferred, allowed):
+    return "at^scfg=Radio/band,{0},{1}".format(preferred, allowed)
+
+def pin(pinValue = 9999):
+    return "AT+CPIN={0}".format(pinValue)
+
+def cmee2():
+    return "AT+CMEE=2"
+
+scenarios = { 'cmu850': 
+[ radioBand(4,4),pin(),cmee2(),radioBand(8,12),radioBand(4,4),radioBand(4,12)]
+}
 
 class SerialCommunicationThread(QtCore.QThread):
 
@@ -50,16 +64,16 @@ class MainWindow(QtGui.QWidget):
 #                                       second_band = "AT^SCFG=radio/band,4,12")
 #        self.playSequence();
 
-        self.commands = []
-        self.currentCommand = 0
-        self.commands.append("AT^SCFG=Radio/Band,4,4")
-        self.commands.append("AT+CPIN=9999")
-        self.commands.append("AT+CMEE=2")
-        self.commands.append("AT^SCFG=Radio/Band,8,12")
-        self.commands.append("AT^SCFG=Radio/Band,4,4")
-        self.commands.append("AT^SCFG=Radio/Band,4,12")
+        self.commands = copy.deepcopy(scenarios['cmu850'])
 
-        self.textEdit.setText(self.commands[self.currentCommand])
+        #self.commands.append("AT^SCFG=Radio/Band,4,4")
+        #self.commands.append("AT+CPIN=9999")
+        #self.commands.append("AT+CMEE=2")
+        #self.commands.append("AT^SCFG=Radio/Band,8,12")
+        #self.commands.append("AT^SCFG=Radio/Band,4,4")
+        #self.commands.append("AT^SCFG=Radio/Band,4,12")
+
+        self.textEdit.setText(self.commands[0])
 
 #    def playSequence(self):
 #        #here comes all the logic
@@ -82,9 +96,9 @@ class MainWindow(QtGui.QWidget):
         QtCore.qDebug("sendData odpalone!")
         #QtCore.qDebug(self.textEdit.text())
         #self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
-        self.socket.write(str.encode(self.commands[self.currentCommand]) + b"\r\n")
-        self.currentCommand += 1
-        self.textEdit.setText(self.commands[self.currentCommand])
+        msg = self.commands.pop(0)
+        self.socket.write(str.encode(msg) + b"\r\n")
+        self.textEdit.setText(self.commands[0])
 
 
 #str.encode(self.textEdit.text())
