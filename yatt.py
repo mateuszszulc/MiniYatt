@@ -11,65 +11,6 @@ from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 
 
-
-#Seq44_88_315 = {'start' : (4,4), 'command' : (8,8) }
-
-#command = {'comand' : (4,4), 'expected' : (8,8), 'timeout' : 5 }
-
-class TestingSequence:
-    def __init__(self, command, expected, timeout):
-        self.command = command
-        self.expected = expected
-        self.timeout = timeout
-        #self.delay = delay
-
-
-class Sequence:
-    def __init__(self, init_band, first_band, second_band):
-        self.seq = []
-
-				#INIT
-        self.seq.append(TestingSequence("AT^SMSO", "SYSTART", 0)) #0 czeka bezwzl
-        self.seq.append(TestingSequence(init_band, "OK", 2))
-        self.seq.append(TestingSequence("AT^SMSO", "SYSTART", 3))
-
-        self.seq.append(TestingSequence("AT+CPIN=2","CREG 0;CREG 2;CREG 0", 3))
-
-        self.seq.append(TestingSequence(first_band, "OK", 3))
-        self.seq.append(TestingSequence("", "CREG 5", 10))
-
-        self.seq.append(TestingSequence(second_band, "OK", 3))
-        self.seq.append(TestingSequence("", "CREG 5", 10))
-
-    def play(self):
-        while ( len(self.seq) > 0 ) :
-            next = self.seq.pop(0)
-            print(next.command)
-            
-class SequencePlayer:
-    def __init__(self, socket, seq):
-        self.socket = socket
-        self.seq = seq
-        self.play()
-    def play(self):
-        self.socket.write(seq.command)
-				try 
-				{
-					sleep(5)
-          print("nie dostalem danych")
-				}
-        catch
-        {
-            print("Obsluga danych")
-
-        }
-    def dataReceived(self):
-        #....
-
-        # teraz czekaj na timeout lub na sygnal w zaleznosci od tego,
-        # co bedzie wczesniej
-
-
 class SerialCommunicationThread(QtCore.QThread):
 
     def __init__(self, socket):
@@ -86,6 +27,8 @@ class MainWindow(QtGui.QWidget):
         super(QtGui.QWidget, self).__init__()
 
         QtGui.QApplication.setStyle(QtGui.QStyleFactory.create("Plastique"));
+        self.setWindowTitle("Mini Yatt Player")
+
         self.socket = serial.Serial(3,115200)
         self.thread = SerialCommunicationThread(self.socket)
         self.thread.start()
@@ -102,13 +45,25 @@ class MainWindow(QtGui.QWidget):
 				
         self.createShortcuts()
 
-        self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
-                                        first_band = "AT^SCFG=radio/band,8,8",
-                                       second_band = "AT^SCFG=radio/band,4,12")
-        self.playSequence();
-    def playSequence(self):
-        #here comes all the logic
-        self.sequence.play();
+#        self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
+#                                        first_band = "AT^SCFG=radio/band,8,8",
+#                                       second_band = "AT^SCFG=radio/band,4,12")
+#        self.playSequence();
+
+        self.commands = []
+        self.currentCommand = 0
+        self.commands.append("AT^SCFG=Radio/Band,4,4")
+        self.commands.append("AT+CPIN=9999")
+        self.commands.append("AT+CMEE=2")
+        self.commands.append("AT^SCFG=Radio/Band,8,12")
+        self.commands.append("AT^SCFG=Radio/Band,4,4")
+        self.commands.append("AT^SCFG=Radio/Band,4,12")
+
+        self.textEdit.setText(self.commands[self.currentCommand])
+
+#    def playSequence(self):
+#        #here comes all the logic
+#        self.sequence.play();
  
     def createShortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
@@ -124,13 +79,13 @@ class MainWindow(QtGui.QWidget):
         self.textEdit2.moveCursor(QtGui.QTextCursor.End)
 
     def sendData(self):
-        QtCore.qDebug("ALa ma kota")
-        QtCore.qDebug(self.textEdit.text())
-        #self.socket.write(b"AT\r\n")
-        #self.socket.write(b"AT" + b"\r\n")
+        QtCore.qDebug("sendData odpalone!")
+        #QtCore.qDebug(self.textEdit.text())
+        #self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
+        self.socket.write(str.encode(self.commands[self.currentCommand]) + b"\r\n")
+        self.currentCommand += 1
+        self.textEdit.setText(self.commands[self.currentCommand])
 
-        #self.socket.write(str.encode("AT") + b"\r\n")
-        self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
 
 #str.encode(self.textEdit.text())
 
@@ -148,6 +103,11 @@ if __name__ == '__main__':
 #self.thread.newData.connect(self.textEdit2.setText)
 
 
+#self.socket.write(b"AT\r\n")
+#self.socket.write(b"AT" + b"\r\n")
+
+#self.socket.write(str.encode("AT") + b"\r\n")
+
 
 #NOT WORKING
 #        self.connect(self.textEdit, QtCore.SIGNAL("returnPressed()"), self, QtCore.SLOT("sendData()"))
@@ -156,64 +116,3 @@ if __name__ == '__main__':
 #        self.connect(self.textEdit, QtCore.SIGNAL("returnPressed()"), self.sendData)
 
 
-#    def about(self):
-#        QtGui.QMessageBox.about(self, "About Application",
-#                "The <b>Application</b> example demonstrates how to write "
-#                "modern GUI applications using Qt, with a menu bar, "
-#                "toolbars, and a status bar.")
-#
-#    def readSettings(self):
-#        settings = QtCore.QSettings("REC", "Yatt")
-#        pos = settings.value("pos", QtCore.QPoint(200, 200))
-#        size = settings.value("size", QtCore.QSize(400, 400))
-#        self.resize(size)
-#        self.move(pos)
-#
-#    def writeSettings(self):
-#        settings = QtCore.QSettings("REC", "Yatt")
-#        settings.setValue("pos", self.pos())
-#        settings.setValue("size", self.size())
-#
-#    def maybeSave(self):
-#        if self.textEdit.document().isModified():
-#            ret = QtGui.QMessageBox.warning(self, "Application",
-#                    "The document has been modified.\nDo you want to save "
-#                    "your changes?",
-#                    QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard |
-#                    QtGui.QMessageBox.Cancel)
-#            if ret == QtGui.QMessageBox.Save:
-#                return self.save()
-#            elif ret == QtGui.QMessageBox.Cancel:
-#                return False
-#        return True
-#
-#    def loadFile(self, fileName):
-#        file = QtCore.QFile(fileName)
-#        if not file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
-#            QtGui.QMessageBox.warning(self, "Application",
-#               "Cannot read file %s:\n%s." % (fileName, file.errorString()))
-#            return
-#
-#        inf = QtCore.QTextStream(file)
-#        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-#        self.textEdit.setPlainText(inf.readAll())
-#        QtGui.QApplication.restoreOverrideCursor()
-#
-#        self.setCurrentFile(fileName)
-#        self.statusBar().showMessage("File loaded", 2000)
-#
-#    def saveFile(self, fileName):
-#        file = QtCore.QFile(fileName)
-#        if not file.open(QtCore.QFile.WriteOnly | QtCore.QFile.Text):
-#            QtGui.QMessageBox.warning(self, "Application",
-#              "Cannot write file %s:\n%s." % (fileName, file.errorString()))
-#            return False
-#
-#        outf = QtCore.QTextStream(file)
-#        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-#        outf << self.textEdit.toPlainText()
-#        QtGui.QApplication.restoreOverrideCursor()
-#
-#        self.setCurrentFile(fileName);
-#        self.statusBar().showMessage("File saved", 2000)
-#        return True
