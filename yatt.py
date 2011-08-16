@@ -11,7 +11,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4 import Qt
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtGui import QAction, QIcon, QActionGroup, QComboBox
 
 
 def radioBand(preferred, allowed):
@@ -23,8 +23,18 @@ def pin(pinValue = 9999):
 def cmee2():
     return "AT+CMEE=2"
 
-scenarios = { 'cmu850': 
-[ radioBand(4,4),pin(),cmee2(),radioBand(8,12),radioBand(4,4),radioBand(4,12)]
+def smso():
+    return "AT^SMSO"
+
+scenarios = { 
+'cmu850': 
+[ radioBand(4,4), smso(), pin(),radioBand(8,12),radioBand(4,4),radioBand(4,12)],
+'cmu850_AllowAll': 
+[ radioBand(4,4), smso(), pin(),radioBand(8,15),radioBand(4,4),radioBand(2,15)],
+'cmu900': 
+[ radioBand(2,2), smso(), pin(),radioBand(1,3),radioBand(2,2),radioBand(2,3)],
+'cmu900_AllowAll': 
+[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)]
 }
 
 class SerialCommunicationThread(QtCore.QThread):
@@ -71,18 +81,30 @@ class MainWindow(QtGui.QMainWindow):
 				
         self.createShortcuts()
         self.createActions()
+        self.createActionGroup()
         self.createMenus()
         self.createToolbar()
         
-        self.resize(500,400)
+        self.readSettings()
+        #self.resize(500,400)
 #       self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
 #                                       first_band = "AT^SCFG=radio/band,8,8",
 #                                      second_band = "AT^SCFG=radio/band,4,12")
 #       self.playSequence();
 
-        self.commands = copy.deepcopy(scenarios['cmu850'])
+        #self.commands = copy.deepcopy(scenarios['cmu850'])
+        #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
+        self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
+
+        for key in scenarios.keys():
+            self.scenarioComboBox.addItem(key)
+
 
         self.lineEdit.setText(self.commands[0])
+
+    def selectScenario(self):
+        QtCore.qDebug("selectScenario")
+        #self.currentScenario = 
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
@@ -90,6 +112,8 @@ class MainWindow(QtGui.QMainWindow):
         self.fileToolBar.addAction(self.modelAct)
         self.fileToolBar.addAction(self.pinAct)
         self.fileToolBar.addAction(self.moniAct)
+        self.fileToolBar.addAction(self.smsoAct)
+        self.fileToolBar.addAction(self.bandsAct)
 
     def createCentralWidget(self):
         centralWidget = QWidget()
@@ -97,13 +121,18 @@ class MainWindow(QtGui.QMainWindow):
 
         self.lineEdit = QtGui.QLineEdit()
         self.textEdit = QtGui.QTextEdit()
+
+
+        self.scenarioComboBox = QtGui.QComboBox()
+
         self.layout = QtGui.QVBoxLayout()
         self.layout.addWidget(self.lineEdit)
         self.layout.addWidget(self.textEdit)
+        self.layout.addWidget(self.scenarioComboBox)
         centralWidget.setLayout(self.layout)
 
     def setupSocketThread (self):
-        self.socket = serial.Serial(3,115200)
+        self.socket = serial.Serial(4,115200)
         self.thread = SerialCommunicationThread(self.socket)
         self.thread.start()
 
@@ -125,20 +154,42 @@ class MainWindow(QtGui.QMainWindow):
         self.pinAct = QAction("at+cpin=9999", self, triggered=self.sendPin)
         self.atAct = QAction("at", self, triggered=self.sendAt)
         self.modelAct = QAction("model", self,  triggered=self.sendModel)
+        self.smsoAct = QAction("Shutdown", self,  triggered=self.sendShutdown)
 
         self.addButtonAct = QAction("Add Button", self,triggered=self.addButton)
 
         self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
                                                  triggered=QtGui.qApp.quit)
+
+    def createActionGroup(self):
+        self.actionGroup = QActionGroup(self,triggered=self.actionGroupTriggered)
+        self.bandsAct = QAction("Bands?", self)
+        self.bandsAct.setData("at^scfg=radio/band")
+        self.actionGroup.addAction(self.bandsAct)
+
+    def closeEvent(self, event):
+        self.writeSettings()
         
+    def readSettings(self):
+        settings = QtCore.QSettings("REC", "MiniYatt")
+        pos = settings.value("pos", QtCore.QPoint(200, 200))
+        size = settings.value("size", QtCore.QSize(400, 400))
+        self.resize(size)
+        self.move(pos)
+
+    def writeSettings(self):
+        settings = QtCore.QSettings("REC", "MiniYatt")
+        settings.setValue("pos", self.pos())
+        settings.setValue("size", self.size())
+
     def openFile(self):
         QtCore.qDebug("Hello From Open FIle")
 
     def addButton(self):
-        addButtonWidget = AddButtonWidget()
-        #addButtonWidget.setWindowModality(QtCore.Qt.WindowModal)
-        addButtonWidget.resize(200,200)
-        addButtonWidget.show()
+        self.addButtonWidget = AddButtonWidget()
+        self.addButtonWidget.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.addButtonWidget.resize(200,200)
+        self.addButtonWidget.show()
         QtCore.qDebug("Hello From Add Button")
 
     def readNewData(self, data):
@@ -155,14 +206,22 @@ class MainWindow(QtGui.QMainWindow):
         self.socket.write(str.encode(msg) + b"\r\n")
         self.lineEdit.setText(self.commands[0])
 
+    def actionGroupTriggered(self, action):
+        QtCore.qDebug("Hello from actionGroupTriggered")
+        QtCore.qDebug(action.data())
+        self.socket.write(str.encode(action.data()) + b"\r\n")
+        
+
     def sendMoni(self):
         self.socket.write(str.encode("at^moni") + b"\r\n")
     def sendPin(self):
-        self.socket.write(str.encode("at+pin=9999") + b"\r\n")
+        self.socket.write(str.encode("at+cpin=9999") + b"\r\n")
     def sendAt(self):
         self.socket.write(str.encode("at") + b"\r\n")
     def sendModel(self):
         self.socket.write(str.encode("at^siekret=1") + b"\r\n")
+    def sendShutdown(self):
+        self.socket.write(str.encode("at^smso") + b"\r\n")
 
 
 #   def playSequence(self):
