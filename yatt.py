@@ -13,6 +13,9 @@ from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 from PyQt4.QtGui import QAction, QIcon, QActionGroup, QComboBox
 
+from SerialCommunicationThread import *
+
+from AddButtonWidget import *
 
 def radioBand(preferred, allowed):
     return "at^scfg=Radio/band,{0},{1}".format(preferred, allowed)
@@ -27,43 +30,15 @@ def smso():
     return "AT^SMSO"
 
 scenarios = { 
+'cmu900_AllowAll': 
+[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)],
 'cmu850': 
 [ radioBand(4,4), smso(), pin(),radioBand(8,12),radioBand(4,4),radioBand(4,12)],
 'cmu850_AllowAll': 
 [ radioBand(4,4), smso(), pin(),radioBand(8,15),radioBand(4,4),radioBand(2,15)],
 'cmu900': 
 [ radioBand(2,2), smso(), pin(),radioBand(1,3),radioBand(2,2),radioBand(2,3)],
-'cmu900_AllowAll': 
-[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)]
 }
-
-class SerialCommunicationThread(QtCore.QThread):
-
-    def __init__(self, socket):
-        super(QtCore.QThread, self).__init__()
-        self.socket = socket
-    def run(self):
-        while (True):
-          linia = self.socket.readline()
-          QtCore.qDebug(linia)
-          self.emit(QtCore.SIGNAL("newData"), bytes.decode(linia))
-
-class AddButtonWidget(QtGui.QWidget):
-    def __init__(self):
-        super(QtGui.QWidget, self).__init__()
-        self.buttonName = QtGui.QLineEdit()
-        self.buttonCommand = QtGui.QLineEdit()
-        self.layout = QtGui.QHBoxLayout()
-        self.layout.addWidget(self.buttonName)
-        self.layout.addWidget(self.buttonCommand)
-        self.setLayout(self.layout)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-
-    def getButtonName(self):
-        return self.buttonName.text()
-
-    def getButtonCommand(self):
-        return self.buttonCommand.text()
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -86,25 +61,21 @@ class MainWindow(QtGui.QMainWindow):
         self.createToolbar()
         
         self.readSettings()
-        #self.resize(500,400)
-#       self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
-#                                       first_band = "AT^SCFG=radio/band,8,8",
-#                                      second_band = "AT^SCFG=radio/band,4,12")
-#       self.playSequence();
-
         #self.commands = copy.deepcopy(scenarios['cmu850'])
-        #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
-        self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
+        self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
+        #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
 
-        for key in scenarios.keys():
+        for key in sorted(scenarios.keys()):
+            print(key)
             self.scenarioComboBox.addItem(key)
 
 
         self.lineEdit.setText(self.commands[0])
 
-    def selectScenario(self):
-        QtCore.qDebug("selectScenario")
-        #self.currentScenario = 
+    def selectScenario(self, scenarioName):
+        QtCore.qDebug("Hello From SelectScenario")
+        QtCore.qDebug(scenarioName)
+        self.commands = copy.deepcopy(scenarios[scenarioName])
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
@@ -123,8 +94,12 @@ class MainWindow(QtGui.QMainWindow):
         self.textEdit = QtGui.QTextEdit()
 
 
-        self.scenarioComboBox = QtGui.QComboBox()
+        self.scenarioComboBox = QtGui.QComboBox(self)
+        #                           currentIndexChanged = self.selectScenario )
 
+#        self.connect(self.scenarioComboBox, 
+#                      QtCore.SIGNAL("currentIndexChanged( const QString)"),                                                  self.selectScenario)
+#
         self.layout = QtGui.QVBoxLayout()
         self.layout.addWidget(self.lineEdit)
         self.layout.addWidget(self.textEdit)
@@ -224,11 +199,6 @@ class MainWindow(QtGui.QMainWindow):
         self.socket.write(str.encode("at^smso") + b"\r\n")
 
 
-#   def playSequence(self):
-#       #here comes all the logic
-#       self.sequence.play();
-
-
 if __name__ == '__main__':
 
     import sys
@@ -238,6 +208,18 @@ if __name__ == '__main__':
     mainWin.show()
     sys.stdout.write("DDD")
     sys.exit(app.exec_())
+
+#   def playSequence(self):
+#       #here comes all the logic
+#       self.sequence.play();
+
+
+
+#       self.sequence = Sequence(init_band = "AT^SCFG=radio/band,4,4",
+#                                       first_band = "AT^SCFG=radio/band,8,8",
+#                                      second_band = "AT^SCFG=radio/band,4,12")
+#       self.playSequence();
+
 
 #self.thread.newData.connect(self.textEdit2.setText)
 
