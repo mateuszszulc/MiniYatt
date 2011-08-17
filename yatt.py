@@ -30,14 +30,14 @@ def smso():
     return "AT^SMSO"
 
 scenarios = { 
-'cmu900_AllowAll': 
-[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)],
 'cmu850': 
 [ radioBand(4,4), smso(), pin(),radioBand(8,12),radioBand(4,4),radioBand(4,12)],
-'cmu850_AllowAll': 
+'cmu850_AllowAll': #with Camp?!
 [ radioBand(4,4), smso(), pin(),radioBand(8,15),radioBand(4,4),radioBand(2,15)],
 'cmu900': 
-[ radioBand(2,2), smso(), pin(),radioBand(1,3),radioBand(2,2),radioBand(2,3)],
+[ radioBand(4,4), smso(), pin(),radioBand(1,3),radioBand(4,4),radioBand(2,3)],
+'cmu900_AllowAll': #with CAMP?! should camp on 2,2 or 4,4? Another Test Case?
+[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)],
 }
 
 class MainWindow(QtGui.QMainWindow):
@@ -50,7 +50,6 @@ class MainWindow(QtGui.QMainWindow):
         self.setupSocketThread()
         self.createCentralWidget()
 
-
         self.lineEdit.returnPressed.connect(self.sendData)
         self.connect(self.thread, QtCore.SIGNAL("newData"), self.readNewData)
 				
@@ -62,7 +61,8 @@ class MainWindow(QtGui.QMainWindow):
         
         self.readSettings()
         #self.commands = copy.deepcopy(scenarios['cmu850'])
-        self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
+        #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
+        self.commands = copy.deepcopy(scenarios['cmu900'])
         #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
 
         for key in sorted(scenarios.keys()):
@@ -107,7 +107,7 @@ class MainWindow(QtGui.QMainWindow):
         centralWidget.setLayout(self.layout)
 
     def setupSocketThread (self):
-        self.socket = serial.Serial(4,115200)
+        self.socket = serial.Serial(3,115200)
         self.thread = SerialCommunicationThread(self.socket)
         self.thread.start()
 
