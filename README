@@ -1,0 +1,9 @@
+1. Add playing sequence button:
+ a) add timeout - time after test becomes FAIL
+ b) add delay - time between next command (is this necessary?)
+ c) expected output.
+
+2. Dodac:
+- czas ostatniej komendy 
+- indykator polaczenia
+- mozliwosc zmiany terminala / dwa terminale

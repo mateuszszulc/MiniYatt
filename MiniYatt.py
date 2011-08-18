@@ -8,7 +8,6 @@ import copy
 
 sip.setapi('QVariant', 2)
 
-#from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 from PyQt4.QtGui import QAction, QIcon, QActionGroup, QComboBox
@@ -63,20 +62,15 @@ class MainWindow(QtGui.QMainWindow):
         self.readSettings()
         #self.commands = copy.deepcopy(scenarios['cmu850'])
         #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
-        self.commands = copy.deepcopy(scenarios['cmu900'])
+        #self.commands = copy.deepcopy(scenarios['cmu900'])
         #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
+
+        self.connect(self.scenarioComboBox, 
+                      QtCore.SIGNAL("currentIndexChanged( const QString)"),                                                  self.selectScenario)
 
         for key in sorted(scenarios.keys()):
             print(key)
             self.scenarioComboBox.addItem(key)
-
-
-        self.lineEdit.setText(self.commands[0])
-
-    def selectScenario(self, scenarioName):
-        QtCore.qDebug("Hello From SelectScenario")
-        QtCore.qDebug(scenarioName)
-        self.commands = copy.deepcopy(scenarios[scenarioName])
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
@@ -93,13 +87,16 @@ class MainWindow(QtGui.QMainWindow):
         self.scenarioComboBox = QtGui.QComboBox(self)
         #                           currentIndexChanged = self.selectScenario )
 
-#        self.connect(self.scenarioComboBox, 
-#                      QtCore.SIGNAL("currentIndexChanged( const QString)"),                                                  self.selectScenario)
         self.layout = QtGui.QVBoxLayout()
         self.layout.addWidget(self.lineEdit)
         self.layout.addWidget(self.textEdit)
         self.layout.addWidget(self.scenarioComboBox)
         centralWidget.setLayout(self.layout)
+
+    def actionFactory(self, actionName, atCmd):
+        newActionObject = QAction(actionName, self)
+        newActionObject.setData(atCmd)
+        return newActionObject
 
     def setupSocketThread (self):
         self.socket = None
@@ -110,29 +107,25 @@ class MainWindow(QtGui.QMainWindow):
             QtGui.QMessageBox.about(self, "Error",
                 "Socket in use")
         self.thread = SerialCommunicationThread(self.socket)
-        #self.thread.start()
+        self.thread.start()
             
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("File")
         self.fileMenu.addAction(self.quitAct)
 
-        self.toolbarMenu = self.menuBar().addMenu("Toolbar")
-        self.toolbarMenu.addAction(self.addButtonAct)
+        #self.toolbarMenu = self.menuBar().addMenu("Toolbar")
+        #self.toolbarMenu.addAction(self.addButtonAct)
 
     def createShortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.shortcut.activated.connect(self.openFile)
 
-    def actionFactory(self, actionName, atCmd):
-        newActionObject = QAction(actionName, self)
-        newActionObject.setData(atCmd)
-        return newActionObject
-
     def createActions(self):
-        self.addAct = QAction(QIcon("addIcon16.png"), "Add", self)
+        self.addAct = QAction(QIcon("addIcon16.png"), "Add", self, 
+                                                triggered=self.addButton)
 
-        self.addButtonAct = QAction("Add Button",self,triggered=self.addButton)
+        #self.addButtonAct = QAction("Add Button",self,triggered=self.addButton)
 
         self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
                                                  triggered=QtGui.qApp.quit)
@@ -153,6 +146,12 @@ class MainWindow(QtGui.QMainWindow):
             newActionObject = self.actionFactory(actionItem[0], actionItem[1])
             self.actionGroup.addAction(newActionObject)
             self.fileToolBar.addAction(newActionObject)
+
+    def selectScenario(self, scenarioName):
+        QtCore.qDebug("Hello From SelectScenario")
+        QtCore.qDebug(scenarioName)
+        self.commands = copy.deepcopy(scenarios[scenarioName])
+        self.lineEdit.setText(self.commands[0])
 
 
     def closeEvent(self, event):
