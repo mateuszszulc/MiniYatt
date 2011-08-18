@@ -3,17 +3,18 @@
 import sip
 import sys
 import serial
+from serial import SerialException
 import copy
 
 sip.setapi('QVariant', 2)
 
-from PyQt4 import QtCore, QtGui
-from PyQt4 import Qt
+#from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 from PyQt4.QtGui import QAction, QIcon, QActionGroup, QComboBox
 
 from SerialCommunicationThread import *
+
 
 from AddButtonWidget import *
 
@@ -101,9 +102,16 @@ class MainWindow(QtGui.QMainWindow):
         centralWidget.setLayout(self.layout)
 
     def setupSocketThread (self):
-        self.socket = serial.Serial(3,115200)
+        self.socket = None
+        try:
+            self.socket = serial.Serial(3,115200)
+        except SerialException as e:
+            QtCore.qDebug("Exception catched!")
+            QtGui.QMessageBox.about(self, "Error",
+                "Socket in use")
         self.thread = SerialCommunicationThread(self.socket)
-        self.thread.start()
+        #self.thread.start()
+            
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("File")
