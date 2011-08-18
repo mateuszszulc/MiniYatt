@@ -1,0 +1,82 @@
+
+^SYSSTART
+at^scfg=radio/band,4,4
+
+^SCFG: "Radio/Band","4","4"
+
+OK
+at+cpin=9999
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^scfg=radio/band,4,12
+
+^SCFG: "Radio/Band","4","12"
+
+OK
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^moni
+
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+  Searching
+
+OK
+
++CREG: 2
+
++CREG: 0
+at^moni
+
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+  525 63  -47 260  03 0002 0001   0   0  30  -111  63 I    Limited Service
+
+OK
+
++CREG: 2
+
++CREG: 1,"0004","0003"
+at^scfg=radio/band,4,4
+
+^SCFG: "Radio/Band","4","4"
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^moni
+
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+  525 63  -47 260  03 0002 0001   0   0  30  -111  63 I    Limited Service
+
+OK
+at^scfg=radio/band,8,12
+
+^SCFG: "Radio/Band","8","12"
+
+OK
+
++CREG: 2
+
++CREG: 1,"0004","0003"

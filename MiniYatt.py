@@ -55,9 +55,9 @@ class MainWindow(QtGui.QMainWindow):
 				
         self.createShortcuts()
         self.createActions()
+        self.createToolbar()
         self.createActionGroup()
         self.createMenus()
-        self.createToolbar()
         
         self.readSettings()
         #self.commands = copy.deepcopy(scenarios['cmu850'])
@@ -79,12 +79,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
-        self.fileToolBar.addAction(self.atAct)
-        self.fileToolBar.addAction(self.modelAct)
-        self.fileToolBar.addAction(self.pinAct)
-        self.fileToolBar.addAction(self.moniAct)
-        self.fileToolBar.addAction(self.smsoAct)
-        self.fileToolBar.addAction(self.bandsAct)
+        self.fileToolBar.addAction(self.addAct)
 
     def createCentralWidget(self):
         centralWidget = QWidget()
@@ -99,7 +94,6 @@ class MainWindow(QtGui.QMainWindow):
 
 #        self.connect(self.scenarioComboBox, 
 #                      QtCore.SIGNAL("currentIndexChanged( const QString)"),                                                  self.selectScenario)
-#
         self.layout = QtGui.QVBoxLayout()
         self.layout.addWidget(self.lineEdit)
         self.layout.addWidget(self.textEdit)
@@ -122,25 +116,36 @@ class MainWindow(QtGui.QMainWindow):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.shortcut.activated.connect(self.openFile)
 
-    def createActions(self):
-        # HOW TO TRIGGER WITH SPECYFIC DATA?
-        self.moniAct = QAction("at^moni", self, shortcut=QKeySequence.New, 
-                       triggered=self.sendMoni)
-        self.pinAct = QAction("at+cpin=9999", self, triggered=self.sendPin)
-        self.atAct = QAction("at", self, triggered=self.sendAt)
-        self.modelAct = QAction("model", self,  triggered=self.sendModel)
-        self.smsoAct = QAction("Shutdown", self,  triggered=self.sendShutdown)
+    def actionFactory(self, actionName, atCmd):
+        newActionObject = QAction(actionName, self)
+        newActionObject.setData(atCmd)
+        return newActionObject
 
-        self.addButtonAct = QAction("Add Button", self,triggered=self.addButton)
+    def createActions(self):
+        self.addAct = QAction(QIcon("addIcon16.png"), "Add", self)
+
+        self.addButtonAct = QAction("Add Button",self,triggered=self.addButton)
 
         self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
                                                  triggered=QtGui.qApp.quit)
 
     def createActionGroup(self):
-        self.actionGroup = QActionGroup(self,triggered=self.actionGroupTriggered)
-        self.bandsAct = QAction("Bands?", self)
-        self.bandsAct.setData("at^scfg=radio/band")
-        self.actionGroup.addAction(self.bandsAct)
+        self.actionGroup=QActionGroup(self,triggered=self.actionGroupTriggered)
+
+        allActionsItemList = []
+        allActionsItemList.append(["Bands?", "at^scfg=radio/band"])
+        allActionsItemList.append(["at^moni", "at^moni"])
+        allActionsItemList.append(["PIN","at+cpin=9999"])
+        allActionsItemList.append(["PIN?","at+cpin?"])
+        allActionsItemList.append(["AT", "AT"])
+        allActionsItemList.append(["Model","at^siekret=1"])
+        allActionsItemList.append(["Shutdown","at^smso"])
+
+        for actionItem in allActionsItemList:
+            newActionObject = self.actionFactory(actionItem[0], actionItem[1])
+            self.actionGroup.addAction(newActionObject)
+            self.fileToolBar.addAction(newActionObject)
+
 
     def closeEvent(self, event):
         self.writeSettings()
@@ -175,8 +180,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def sendData(self):
         QtCore.qDebug("sendData odpalone!")
-        #QtCore.qDebug(self.textEdit.text())
-        #self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
         msg = self.commands.pop(0)
         self.socket.write(str.encode(msg) + b"\r\n")
         self.lineEdit.setText(self.commands[0])
@@ -186,19 +189,6 @@ class MainWindow(QtGui.QMainWindow):
         QtCore.qDebug(action.data())
         self.socket.write(str.encode(action.data()) + b"\r\n")
         
-
-    def sendMoni(self):
-        self.socket.write(str.encode("at^moni") + b"\r\n")
-    def sendPin(self):
-        self.socket.write(str.encode("at+cpin=9999") + b"\r\n")
-    def sendAt(self):
-        self.socket.write(str.encode("at") + b"\r\n")
-    def sendModel(self):
-        self.socket.write(str.encode("at^siekret=1") + b"\r\n")
-    def sendShutdown(self):
-        self.socket.write(str.encode("at^smso") + b"\r\n")
-
-
 if __name__ == '__main__':
 
     import sys
@@ -208,6 +198,21 @@ if __name__ == '__main__':
     mainWin.show()
     sys.stdout.write("DDD")
     sys.exit(app.exec_())
+
+# senddata
+#QtCore.qDebug(self.textEdit.text())
+#self.socket.write(str.encode(self.textEdit.text()) + b"\r\n")
+
+######## Dodawanie przycisku do toolbara akcji
+#self.actionGroup.addAction("at^moni", "at^moni") #QKeySequence.New!
+
+
+#self.pinAct = QAction("at+cpin=9999", self, triggered=self.sendPin)
+#self.atAct = QAction("at", self, triggered=self.sendAt)
+#self.modelAct = QAction("model", self,  triggered=self.sendModel)
+#self.smsoAct = QAction("Shutdown", self,  triggered=self.sendShutdown)
+#####################
+
 
 #   def playSequence(self):
 #       #here comes all the logic
