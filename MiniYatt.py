@@ -4,7 +4,8 @@ import sip
 import sys
 import serial
 from serial import SerialException
-import copy
+from copy import deepcopy
+import socket
 
 sip.setapi('QVariant', 2)
 
@@ -13,40 +14,25 @@ from PyQt4.QtGui import QWidget, QTextEdit, QLineEdit, QShortcut, QKeySequence
 from PyQt4.QtGui import QAction, QIcon, QActionGroup, QComboBox
 
 from SerialCommunicationThread import *
-
-
 from AddButtonWidget import *
-
-def radioBand(preferred, allowed):
-    return "at^scfg=Radio/band,{0},{1}".format(preferred, allowed)
-
-def pin(pinValue = 9999):
-    return "AT+CPIN={0}".format(pinValue)
-
-def cmee2():
-    return "AT+CMEE=2"
-
-def smso():
-    return "AT^SMSO"
-
-scenarios = { 
-'cmu850': 
-[ radioBand(4,4), smso(), pin(),radioBand(8,12),radioBand(4,4),radioBand(4,12)],
-'cmu850_AllowAll': #with Camp?!
-[ radioBand(4,4), smso(), pin(),radioBand(8,15),radioBand(4,4),radioBand(2,15)],
-'cmu900': 
-[ radioBand(4,4), smso(), pin(),radioBand(1,3),radioBand(4,4),radioBand(2,3)],
-'cmu900_AllowAll': #with CAMP?! should camp on 2,2 or 4,4? Another Test Case?
-[ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),radioBand(8,15)],
-}
+from SequenceFactory import *
+from SocketMock import *
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self):
+    class MODES:
+      MODE_MANUAL = 1
+      MODE_SEQUENCE_PLAYER = 2
+    def __init__(self, mock = None):
         super(QtGui.QMainWindow, self).__init__()
 
         QtGui.QApplication.setStyle(QtGui.QStyleFactory.create("Plastique"));
         self.setWindowTitle("Mini Yatt")
-        
+        self.mock = mock
+
+        self.mode = self.MODES.MODE_SEQUENCE_PLAYER
+
+        self.currentCmd = 0 
+
         self.setupSocketThread()
         self.createCentralWidget()
 
@@ -60,17 +46,12 @@ class MainWindow(QtGui.QMainWindow):
         self.createMenus()
         
         self.readSettings()
-        #self.commands = copy.deepcopy(scenarios['cmu850'])
-        #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
-        #self.commands = copy.deepcopy(scenarios['cmu900'])
-        #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
-
         self.connect(self.scenarioComboBox, 
                       QtCore.SIGNAL("currentIndexChanged( const QString)"),                                                  self.selectScenario)
 
-        for key in sorted(scenarios.keys()):
-            print(key)
-            self.scenarioComboBox.addItem(key)
+        for sequenceName in sorted(SequenceFactory().getAllSequenceNames()):
+            print(sequenceName)
+            self.scenarioComboBox.addItem(sequenceName)
 
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
@@ -100,12 +81,17 @@ class MainWindow(QtGui.QMainWindow):
 
     def setupSocketThread (self):
         self.socket = None
-        try:
-            self.socket = serial.Serial(3,115200)
-        except SerialException as e:
-            QtCore.qDebug("Exception catched!")
-            QtGui.QMessageBox.about(self, "Error",
-                "Socket in use")
+        
+        if self.mock == True:
+            QtCore.qDebug("MOCK MODE ON")
+            self.socket = SocketMock()
+        else:
+          try:
+              self.socket = serial.Serial(3,115200)
+          except SerialException as e:
+              QtCore.qDebug("Exception catched!")
+              QtGui.QMessageBox.about(self, "Error", "Socket in use")
+
         self.thread = SerialCommunicationThread(self.socket)
         self.thread.start()
             
@@ -121,6 +107,20 @@ class MainWindow(QtGui.QMainWindow):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
         self.shortcut.activated.connect(self.openFile)
 
+        self.upArrow = QShortcut(QKeySequence("Up"), self)
+        self.upArrow.activated.connect(self.previousCmd)
+
+        self.downArrow = QShortcut(QKeySequence("Down"), self)
+        self.downArrow.activated.connect(self.nextCmd)
+
+    def previousCmd(self):
+        QtCore.qDebug("Hello From Up")
+        self.currentCmd -= 1
+
+    def nextCmd(self):
+        QtCore.qDebug("Hello From Down")
+        self.currentCmd += 1
+        
     def createActions(self):
         self.addAct = QAction(QIcon("addIcon16.png"), "Add", self, 
                                                 triggered=self.addButton)
@@ -147,12 +147,12 @@ class MainWindow(QtGui.QMainWindow):
             self.actionGroup.addAction(newActionObject)
             self.fileToolBar.addAction(newActionObject)
 
-    def selectScenario(self, scenarioName):
+    def selectScenario(self, sequenceName):
         QtCore.qDebug("Hello From SelectScenario")
-        QtCore.qDebug(scenarioName)
-        self.commands = copy.deepcopy(scenarios[scenarioName])
+        QtCore.qDebug(sequenceName)
+        self.commands = deepcopy(SequenceFactory().getSequence(sequenceName))
+        self.currentCmd = 0
         self.lineEdit.setText(self.commands[0])
-
 
     def closeEvent(self, event):
         self.writeSettings()
@@ -187,9 +187,15 @@ class MainWindow(QtGui.QMainWindow):
 
     def sendData(self):
         QtCore.qDebug("sendData odpalone!")
-        msg = self.commands.pop(0)
+        msg = self.lineEdit.text()
         self.socket.write(str.encode(msg) + b"\r\n")
-        self.lineEdit.setText(self.commands[0])
+
+        if self.mode == self.MODES.MODE_SEQUENCE_PLAYER:
+            self.currentCmd += 1
+            self.lineEdit.setText(self.commands[self.currentCmd])
+        else:
+            addHistory(msg)
+            self.lineEdit.setText("")
 
     def actionGroupTriggered(self, action):
         QtCore.qDebug("Hello from actionGroupTriggered")
@@ -199,11 +205,13 @@ class MainWindow(QtGui.QMainWindow):
 if __name__ == '__main__':
 
     import sys
+    import platform
 
     app = QtGui.QApplication(sys.argv)
-    mainWin = MainWindow()
+    
+    mainWin = MainWindow(platform.node() == "vermont")
+
     mainWin.show()
-    sys.stdout.write("DDD")
     sys.exit(app.exec_())
 
 # senddata
@@ -248,4 +256,9 @@ if __name__ == '__main__':
 #WORKING
 #        self.connect(self.textEdit, QtCore.SIGNAL("returnPressed()"), self.sendData)
 
+
+        #self.commands = copy.deepcopy(scenarios['cmu850'])
+        #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
+        #self.commands = copy.deepcopy(scenarios['cmu900'])
+        #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
 
