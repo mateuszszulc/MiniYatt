@@ -161,10 +161,10 @@ class MainWindow(QtGui.QMainWindow):
 
           #TODO
           ### Wczytaj pierwsza sekwencje
-          timeout = self.commands[0].timeout
+          timeoutValue = self.commands[0].timeout
           response = self.commands[0].response
           
-          self.timer = Timer(timeout, self.timeout)
+          self.timer = Timer(timeoutValue, self.timeout)
           self.timer.start()
         
 
@@ -229,10 +229,20 @@ class MainWindow(QtGui.QMainWindow):
         QtCore.qDebug("TIMEOUT!")
 
     def sequencePlayer(self, data):
+        #TODO - poprawic indeksy
         ### Sprawdz, czy dostales oczekiwane dane 
         if data.find(self.reponse[0]) >= 0 :
             if len(self.response) == 1:
-                waitBeforeNext = self.commands[0].waitBeforeNext
+                self.timer.clear()
+                waitBeforeNext = self.commands[self.currentCmd].waitBeforeNext
+                self.currentCmd += 1
+
+                #TRZEBA USTAWIC WSZYSTKIE PARAMETRY DLA NOWEJ KOMENDY
+                #wysylamy i zapominamy - nasluchujemy na odpowiedzi tutaj.
+                self.nextMsg = self.commands[self.currentCmd].cmd
+                self.timeoutValue = self.commands[self.currentCmd].timeout
+                self.response = self.commands[self.currentCmd].response
+
                 self.timerWaitBeforeNext = Timer(waitBeforeNext, self.sendNext)
                 self.timerWaitBeforeNext.start()
         else:
@@ -250,7 +260,9 @@ class MainWindow(QtGui.QMainWindow):
             self.lineEdit.setText("")
 
     def sendNext(self):
-        self.sendDataMsg(self.sendNext)
+        self.sendDataMsg(self.sendNextMsg)
+        self.timer = Timer(self.timeoutValue, self.timeout)
+        self.timer.start()
 
     def sendData(self):
         QtCore.qDebug("sendData odpalone!")
