@@ -6,6 +6,7 @@ import serial
 from serial import SerialException
 from copy import deepcopy
 import socket
+from threading import Timer
 
 sip.setapi('QVariant', 2)
 
@@ -18,10 +19,12 @@ from AddButtonWidget import *
 from SequenceFactory import *
 from SocketMock import *
 
+class Mode:
+  MANUAL_MODE = 1
+  MANUAL_PLAYER_MODE = 2
+  PEGASUS_MODE = 3
+
 class MainWindow(QtGui.QMainWindow):
-    class MODES:
-      MODE_MANUAL = 1
-      MODE_SEQUENCE_PLAYER = 2
     def __init__(self, mock = None):
         super(QtGui.QMainWindow, self).__init__()
 
@@ -29,7 +32,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("Mini Yatt")
         self.mock = mock
 
-        self.mode = self.MODES.MODE_SEQUENCE_PLAYER
+        self.mode = Mode.MANUAL_PLAYER_MODE
 
         self.currentCmd = 0 
 
@@ -74,7 +77,7 @@ class MainWindow(QtGui.QMainWindow):
         self.layout.addWidget(self.scenarioComboBox)
         centralWidget.setLayout(self.layout)
 
-    def actionFactory(self, actionName, atCmd):
+    def createAction(self, actionName, atCmd):
         newActionObject = QAction(actionName, self)
         newActionObject.setData(atCmd)
         return newActionObject
@@ -100,8 +103,22 @@ class MainWindow(QtGui.QMainWindow):
         self.fileMenu = self.menuBar().addMenu("File")
         self.fileMenu.addAction(self.quitAct)
 
-        #self.toolbarMenu = self.menuBar().addMenu("Toolbar")
-        #self.toolbarMenu.addAction(self.addButtonAct)
+        self.modeMenu = self.menuBar().addMenu("Mode")
+        self.modeActionGroup = QActionGroup(self,triggered=self.modeActionTriggered)
+        self.modeActionGroup.setExclusive(True)
+
+        allModeList = []
+        allModeList.append(["Manual Mode", False, Mode.MANUAL_MODE])
+        allModeList.append(["Manual Player Mode",True,Mode.MANUAL_PLAYER_MODE])
+        allModeList.append(["Pegasus Mode", False,Mode.PEGASUS_MODE])
+        
+        for modeData in allModeList:
+            modeActionObject = QAction(modeData[0],self)
+            modeActionObject.setCheckable(True)
+            modeActionObject.setChecked(modeData[1])
+            modeActionObject.setData(modeData[2])
+            self.modeActionGroup.addAction(modeActionObject)
+            self.modeMenu.addAction(modeActionObject)
 
     def createShortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
@@ -130,6 +147,27 @@ class MainWindow(QtGui.QMainWindow):
         self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
                                                  triggered=QtGui.qApp.quit)
 
+    def modeActionTriggered(self, action):
+        QtCore.qDebug(str(action.data()))
+        
+        ###### PEGASUS MODE ########
+        if action.data() == Mode.PEGASUS_MODE:
+          QtCore.qDebug("PEGASUS MODE SELECTED - co powinienem dalej zrobic?")
+
+          #tutaj przyda sie jakis iterator
+          currentSequence = self.scenarioComboBox.currentText()
+          self.commands = SequenceFactory().getNewSequence(currentSequence)
+          self.currentCmd = 0
+
+          #TODO
+          ### Wczytaj pierwsza sekwencje
+          timeout = self.commands[0].timeout
+          response = self.commands[0].response
+          
+          self.timer = Timer(timeout, self.timeout)
+          self.timer.start()
+        
+
     def createActionGroup(self):
         self.actionGroup=QActionGroup(self,triggered=self.actionGroupTriggered)
 
@@ -143,7 +181,7 @@ class MainWindow(QtGui.QMainWindow):
         allActionsItemList.append(["Shutdown","at^smso"])
 
         for actionItem in allActionsItemList:
-            newActionObject = self.actionFactory(actionItem[0], actionItem[1])
+            newActionObject = self.createAction(actionItem[0], actionItem[1])
             self.actionGroup.addAction(newActionObject)
             self.fileToolBar.addAction(newActionObject)
 
@@ -182,20 +220,41 @@ class MainWindow(QtGui.QMainWindow):
     def readNewData(self, data):
         data = data.strip()
         self.textEdit.append(data)
-        #self.textEdit2.append("\n")
         self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        
+        if self.mode == Mode.PEGASUS_MODE:
+            self.sequencePlayer(data)
 
-    def sendData(self):
-        QtCore.qDebug("sendData odpalone!")
-        msg = self.lineEdit.text()
+    def timeout(self):
+        QtCore.qDebug("TIMEOUT!")
+
+    def sequencePlayer(self, data):
+        ### Sprawdz, czy dostales oczekiwane dane 
+        if data.find(self.reponse[0]) >= 0 :
+            if len(self.response) == 1:
+                waitBeforeNext = self.commands[0].waitBeforeNext
+                self.timerWaitBeforeNext = Timer(waitBeforeNext, self.sendNext)
+                self.timerWaitBeforeNext.start()
+        else:
+            QtCore.qDebug("IGNORE")
+
+    def sendDataMsg(self, msg):
+        #msg = self.lineEdit.text()
         self.socket.write(str.encode(msg) + b"\r\n")
 
-        if self.mode == self.MODES.MODE_SEQUENCE_PLAYER:
+        if self.mode == Mode.MANUAL_PLAYER_MODE:
             self.currentCmd += 1
             self.lineEdit.setText(self.commands[self.currentCmd])
         else:
             addHistory(msg)
             self.lineEdit.setText("")
+
+    def sendNext(self):
+        self.sendDataMsg(self.sendNext)
+
+    def sendData(self):
+        QtCore.qDebug("sendData odpalone!")
+        self.sendDataMsg(self.lineEdit.text())
 
     def actionGroupTriggered(self, action):
         QtCore.qDebug("Hello from actionGroupTriggered")
@@ -261,4 +320,16 @@ if __name__ == '__main__':
         #self.commands = copy.deepcopy(scenarios['cmu850_AllowAll'])
         #self.commands = copy.deepcopy(scenarios['cmu900'])
         #self.commands = copy.deepcopy(scenarios['cmu900_AllowAll'])
+
+
+        #self.modeMenu.addActionGroup(self.manualModeAction)
+        #self.modeMenu.addAction(self.manualModeAction)
+        #self.modeMenu.addAction(self.manualPlayerModeAction)
+        #self.modeMenu.addAction(self.pegasusModeAction)
+
+
+#    def tryNextCommand(self, data):
+#        pass
+#   def actionDispatcher(self, data):
+#       pass
 

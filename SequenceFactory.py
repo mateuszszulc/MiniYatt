@@ -1,9 +1,28 @@
+
+class Command:
+  def __init__(self, cmd, response = ["OK"], waitBeforeNext = 5, timeout = 60):
+    self.cmd = cmd
+    self.response = response
+    self.waitBeforeNext = waitBeforeNext
+    self.timeout = timeout
+
 class SequenceFactory:
   def __init__(self):
     radioBand = self.radioBand
     smso = self.smso
     pin = self.pin
+
+    creg020 = self.creg020
+    creg20 = self.creg20
+    creg1 = self.creg1
     
+    self.sequencesNew = { 
+    'cmu850': 
+    [ Command(radioBand(4,4), creg020()), Command(smso()), Command(pin()), 
+      Command(radioBand(8,12), creg1()), Command(radioBand(4,4), creg020),
+      Command(radioBand(4,12), creg1())]
+    }
+
     self.sequences = { 
     'cmu850': 
     [ radioBand(4,4), smso(), pin(),radioBand(8,12),radioBand(4,4),
@@ -21,6 +40,22 @@ class SequenceFactory:
     [ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),
      radioBand(8,15)],
     }
+
+  def creg(self, code):
+    return "+CREG: {0}".format(code)
+
+  def creg1(self):
+    return [self.creg(1)]
+
+  def creg20(self):
+    return [self.creg(2), self.creg(0)]
+
+  def creg020(self):
+    return [self.creg(0), self.creg(2), self.creg(0)]
+
+
+  def getNewSequence(self, sequenceName):
+    return self.sequencesNew[sequenceName]
 
   def getSequence(self, sequenceName):
     return self.sequences[sequenceName]
