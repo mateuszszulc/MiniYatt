@@ -56,6 +56,22 @@ class MainWindow(QtGui.QMainWindow):
             print(sequenceName)
             self.scenarioComboBox.addItem(sequenceName)
 
+    def subscribeForFilename(self):
+        return "Log.miniyatt"
+
+    def saveFile(self):
+        filename = self.subscribeForFilename()
+        file = QtCore.QFile(filename)
+        if not file.open(QtCore.QFile.WriteOnly | QtCore.QFile.Text):
+            QtGui.QMessageBox.warning(self, "Application",
+                    "Cannot write file %s:\n%s." % (fileName, file.errorString()))
+            return False
+
+        outf = QtCore.QTextStream(file)
+        outf << self.textEdit.toPlainText()
+        file.close()
+        return True
+
     def createToolbar(self):
         self.fileToolBar = self.addToolBar("ATCommands Toolbar")
         self.fileToolBar.addAction(self.addAct)
@@ -102,6 +118,7 @@ class MainWindow(QtGui.QMainWindow):
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("File")
         self.fileMenu.addAction(self.quitAct)
+        self.fileMenu.addAction(self.saveAct)
 
         self.modeMenu = self.menuBar().addMenu("Mode")
         self.modeActionGroup = QActionGroup(self,triggered=self.modeActionTriggered)
@@ -146,6 +163,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.quitAct = QAction("Quit", self, shortcut=QKeySequence.Quit,
                                                  triggered=QtGui.qApp.quit)
+        self.saveAct = QAction("Save", self, shortcut=QKeySequence.Save,
+                                                 triggered=self.saveFile)
 
     def modeActionTriggered(self, action):
         QtCore.qDebug(str(action.data()))

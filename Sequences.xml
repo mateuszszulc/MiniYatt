@@ -1,0 +1,55 @@
+<sequences>
+
+ <sequnce name="cmu850">
+  <command>
+   <atcmd>smso</atcmd>
+   <response>SYSSTART</response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>radioBand(4,4)</atcmd>
+   <response></response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>smso</atcmd>
+   <response>SYSSTART</response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>pin</atcmd>
+   <response></response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>radioBand(8,12)</atcmd>
+   <response>creg1</response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>radioBand(4,4)</atcmd>
+   <response>creg020()</response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+  <command>
+   <atcmd>radioBand(4,12)</atcmd>
+   <response>creg1()</response>
+   <waitBeforeNext></waitBeforeNext>
+   <timeout></timeout>
+  </command>
+
+ </sequnce>
+
+</sequences>

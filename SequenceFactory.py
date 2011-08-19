@@ -18,7 +18,7 @@ class SequenceFactory:
     creg1 = self.creg1
 
     self.sequencesXml = {}
-    self.readSequencesFromXml()
+    #self.readSequencesFromXml()
     
     self.sequencesNew = { 
     'cmu850': 
@@ -59,9 +59,13 @@ class SequenceFactory:
       commands = list(sequence)
       for command in commands:
         atcmd = self.resolveCommand(command.find("atcmd").text)
+        print(repr(atcmd))
         response = command.find("response").text
+        print(repr(response))
         waitBeforeNext = command.find("waitBeforeNext").text
+        print(repr(waitBeforeNext))
         timeout = command.find("timeout").text
+        print(repr(timeout))
         
         if (len(response) == 0) and (len(timeout) == 0) and (len(waitBeforeNext) == 0):
           sequenceCommands.append(Command(atcmd))
