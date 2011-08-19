@@ -1,0 +1,89 @@
+AT^SMSO
+^SMSO: MS OFF
+
+OK
+
+
+^SHUTDOWN
+
+^SYSSTART
+AT+CPIN=9999
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^scfg=Radio/band,8,15
+^SCFG: "Radio/Band","8","15"
+
+OK
+
++CREG: 2
+
++CREG: 1,"0003","0003"
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+180 44  -66 260  02 0003 0003   0   0   0  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+180 44  -66 260  02 0003 0003   0   0   0  -111  44 I    No connection
+
+OK
+at^scfg=Radio/band,4,4
+^SCFG: "Radio/Band","4","4"
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+610 42  -68 260  03 0002 0002   0   0  30  -111  42 I    Limited Service
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+610 42  -68 260  03 0002 0002   0   0  30  -111  42 I    Limited Service
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+610 42  -68 260  03 0002 0002   0   0  30  -111  42 I    Limited Service
+
+OK
+at^scfg=Radio/band,2,15
+^SCFG: "Radio/Band","2","15"
+
+OK
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 1,"BCAE","B4FE"
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+18 18  -92 260  02 BCAE B4FE   2   6  33  -106  13 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+18 18  -92 260  02 BCAE B4FE   2   6  33  -106  13 I    No connection
+
+OK

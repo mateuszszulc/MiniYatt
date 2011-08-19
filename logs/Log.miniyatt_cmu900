@@ -1,0 +1,115 @@
+AT^SMSO
+^SMSO: MS OFF
+
+OK
+
+
+^SHUTDOWN
+
+^SYSSTART
+AT+CPIN=9999
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+at^scfg=Radio/band,1,3
+^SCFG: "Radio/Band","1","3"
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 1,"0003","0003"
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0  33  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0  33  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0  33  -111  44 I    No connection
+
+OK
+at^scfg=Radio/band,4,4
+^SCFG: "Radio/Band","4","4"
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0   0  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0   0  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+98 44  -66 260  02 0003 0003   0   0   0  -111  44 I    No connection
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+
++CREG: 2
+
++CREG: 0
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^scfg=Radio/band,2,3
+^SCFG: "Radio/Band","2","3"
+
+OK
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 1,"0003","0003"

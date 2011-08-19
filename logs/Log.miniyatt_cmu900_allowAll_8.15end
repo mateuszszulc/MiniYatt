@@ -1,0 +1,108 @@
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+AT^SMSO
+^SMSO: MS OFF
+
+OK
+
+
+^SHUTDOWN
+
+^SYSSTART
+AT+CPIN=9999
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^scfg=Radio/band,1,15
+^SCFG: "Radio/Band","1","15"
+
+OK
+
++CREG: 2
+
++CREG: 1,"0003","0003"
+at^scfg=Radio/band,2,2
+^SCFG: "Radio/Band","2","2"
+
+OK
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^scfg=Radio/band,8,15
+^SCFG: "Radio/Band","8","15"
+
+OK
+
++CREG: 2
+
++CREG: 0
+at^scfg=Radio/band,8,15
+^SCFG: "Radio/Band","8","15"
+
+OK
+
++CREG: 2
+
++CREG: 0
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+at^moni
+Serving Cell                                          I Dedicated channel
+chann rs  dBm MCC MNC  LAC cell NCC BCC PWR RXLev  C1 I chann TS timAdv PWR  dBm Q ChMod
+Searching
+
+OK
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+at^scfg=radio/band
+^SCFG: "Radio/Band","8","15"
+
+OK
+at^scfg=radio/band
+^SCFG: "Radio/Band","8","15"
+
+OK
+at^scfg=radio/band
+^SCFG: "Radio/Band","8","15"
+
+OK
+
++CREG: 2
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
