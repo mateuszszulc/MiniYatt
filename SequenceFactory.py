@@ -49,39 +49,56 @@ class SequenceFactory:
      radioBand(8,15)],
     }
 
+  def getSequencesXml(self):
+    return self.sequencesXml
+
   def readSequencesFromXml(self):
     sequences = XmlSequenceReader("Sequences.xml").getSequences()
 
     for sequence in sequences:
       self.sequencesXml[sequence.attrib['name']] = []
+      print(sequence.attrib['name'])
       sequenceCommands = self.sequencesXml[sequence.attrib['name']]
 
       commands = list(sequence)
       for command in commands:
         atcmd = self.resolveCommand(command.find("atcmd").text)
+        print("A")
         print(repr(atcmd))
-        response = command.find("response").text
+        tmp = command.find("response").text
+        response =  tmp if tmp!=None else []
+        
         print(repr(response))
         waitBeforeNext = command.find("waitBeforeNext").text
         print(repr(waitBeforeNext))
         timeout = command.find("timeout").text
+        print("D")
         print(repr(timeout))
         
-        if (len(response) == 0) and (len(timeout) == 0) and (len(waitBeforeNext) == 0):
+        if (len(response) == 0) and (timeout == None) and (waitBeforeNext == None):
           sequenceCommands.append(Command(atcmd))
           continue
-        if (len(timeout) == 0) and (len(waitBeforeNext) == 0):
+        if (timeout == None) and (waitBeforeNext == None):
           sequenceCommands.append(Command(atcmd, response))
           continue
-        if (len(timeout) == 0):
+        if (timeout == None):
           sequenceCommands.append(Command(atcmd, response, waitBeforeNext))
         else:
           sequenceCommands.append(Command(atcmd, response, waitBeforeNext, timeout))
           
 
       
-  def resolveCommand(self, command):
-    pass
+  def resolveCommand(self, commandText):
+    if commandText == "smso":
+      return self.smso()
+    if commandText == "pin":
+      return self.pin()
+    if commandText == "creg020":
+      return self.creg020()
+    if commandText == "creg1":
+      return self.creg1()
+    if commandText.find("radioBand") == 0:
+      return eval("self."+commandText)
 
   def creg(self, code):
     return "+CREG: {0}".format(code)

@@ -38,14 +38,14 @@
 
   <command>
    <atcmd>radioBand(4,4)</atcmd>
-   <response>creg020()</response>
+   <response>creg020</response>
    <waitBeforeNext></waitBeforeNext>
    <timeout></timeout>
   </command>
 
   <command>
    <atcmd>radioBand(4,12)</atcmd>
-   <response>creg1()</response>
+   <response>creg1</response>
    <waitBeforeNext></waitBeforeNext>
    <timeout></timeout>
   </command>
