@@ -153,17 +153,25 @@ class MainWindow(QtGui.QMainWindow):
         ###### PEGASUS MODE ########
         if action.data() == Mode.PEGASUS_MODE:
           QtCore.qDebug("PEGASUS MODE SELECTED - co powinienem dalej zrobic?")
+  
+          self.mode = Mode.PEGASUS_MODE
 
           #tutaj przyda sie jakis iterator
           currentSequence = self.scenarioComboBox.currentText()
-          self.commands = SequenceFactory().getNewSequence(currentSequence)
+          #self.commands = SequenceFactory().getNewSequence(currentSequence)
+          self.commands = SequenceFactory().getNewSequence("cmu900")
           self.currentCmd = 0
 
           #TODO
           ### Wczytaj pierwsza sekwencje
           timeoutValue = self.commands[0].timeout
-          response = self.commands[0].response
+          self.response = deepcopy(self.commands[0].response)
+          QtCore.qDebug("*****")
+          QtCore.qDebug(repr(self.response))
+          QtCore.qDebug("*****")
           
+          
+          self.sendDataMsg(self.commands[0].cmd)
           self.timer = Timer(timeoutValue, self.timeout)
           self.timer.start()
         
@@ -231,9 +239,14 @@ class MainWindow(QtGui.QMainWindow):
     def sequencePlayer(self, data):
         #TODO - poprawic indeksy
         ### Sprawdz, czy dostales oczekiwane dane 
-        if data.find(self.reponse[0]) >= 0 :
+        
+        QtCore.qDebug("JESTEM w sequencePlayer")
+        QtCore.qDebug(repr(self.response))
+        QtCore.qDebug(data)
+        
+        if data.find(self.response[0]) >= 0 :
             if len(self.response) == 1:
-                self.timer.clear()
+                self.timer.cancel()
                 waitBeforeNext = self.commands[self.currentCmd].waitBeforeNext
                 self.currentCmd += 1
 
@@ -245,22 +258,25 @@ class MainWindow(QtGui.QMainWindow):
 
                 self.timerWaitBeforeNext = Timer(waitBeforeNext, self.sendNext)
                 self.timerWaitBeforeNext.start()
+            else:
+                self.response.pop(0)
         else:
             QtCore.qDebug("IGNORE")
 
     def sendDataMsg(self, msg):
         #msg = self.lineEdit.text()
+        QtCore.qDebug("JESTEM W SendDataMsg: " + msg)
         self.socket.write(str.encode(msg) + b"\r\n")
 
         if self.mode == Mode.MANUAL_PLAYER_MODE:
             self.currentCmd += 1
             self.lineEdit.setText(self.commands[self.currentCmd])
         else:
-            addHistory(msg)
+            #addHistory(msg)
             self.lineEdit.setText("")
 
     def sendNext(self):
-        self.sendDataMsg(self.sendNextMsg)
+        self.sendDataMsg(self.nextMsg)
         self.timer = Timer(self.timeoutValue, self.timeout)
         self.timer.start()
 

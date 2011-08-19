@@ -18,9 +18,13 @@ class SequenceFactory:
     
     self.sequencesNew = { 
     'cmu850': 
-    [ Command(radioBand(4,4), creg020()), Command(smso()), Command(pin()), 
-      Command(radioBand(8,12), creg1()), Command(radioBand(4,4), creg020),
-      Command(radioBand(4,12), creg1())]
+    [ Command(smso(), ["SYSSTART"]),Command(radioBand(4,4)), Command(smso(), ["SYSSTART"]), Command(pin()), 
+      Command(radioBand(8,12), creg1()), Command(radioBand(4,4), creg020()),
+      Command(radioBand(4,12), creg1())],
+    'cmu900': 
+    [ Command(smso(), ["SYSSTART"]),Command(radioBand(4,4)), Command(smso(), ["SYSSTART"]), Command(pin()), 
+      Command(radioBand(1,3), creg1()), Command(radioBand(4,4), creg020()),
+      Command(radioBand(2,3), creg1())]
     }
 
     self.sequences = { 

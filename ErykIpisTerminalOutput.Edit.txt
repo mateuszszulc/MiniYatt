@@ -1,0 +1,43 @@
+
+waitFox(^SYSSTART)
+
+
+cmd(at^scfg=radio/band,4,4)
+
+^SCFG: "Radio/Band","4","4"
+
+waitFor(OK, 10) - timeout
+
+
+cmd(at+cpin=9999)
+
+waitFor(OK, 10) - timeout
+
+waitFox(+CREG: 0, +CREG: 2, +CREG: 0, delayAfterLast = 5)
+
+cmd(at^scfg=radio/band,4,12)
+
+waitFor(OK, 10) - timeout
+
+#waitFor(+CREG: 2, +CREG: 0, +CREG: 2 +CREG: 0, CREG: 1,"0004","0003")
+waitFor(CREG: 1,"0004","0003", 10)
+
+
+cmd(at^scfg=radio/band,4,4)
+
+waitFor(OK, 10) - timeout
+
++CREG: 0
+
++CREG: 2
+
++CREG: 0
+
+waitFox(+CREG: 0, +CREG: 2, +CREG: 0, delayAfterLast = 5)
+
+
+cmd(at^scfg=radio/band,8,12)
+
+waitFor(OK, 10) - timeout
+
+waitFor(CREG: 1,"0004","0003", -1) #Test End
