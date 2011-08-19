@@ -1,3 +1,4 @@
+from XmlSequenceReader import *
 
 class Command:
   def __init__(self, cmd, response = ["OK"], waitBeforeNext = 5, timeout = 60):
@@ -15,6 +16,9 @@ class SequenceFactory:
     creg020 = self.creg020
     creg20 = self.creg20
     creg1 = self.creg1
+
+    self.sequencesXml = {}
+    self.readSequencesFromXml()
     
     self.sequencesNew = { 
     'cmu850': 
@@ -44,6 +48,36 @@ class SequenceFactory:
     [ radioBand(2,2), smso(), pin(),radioBand(1,15),radioBand(2,2),
      radioBand(8,15)],
     }
+
+  def readSequencesFromXml(self):
+    sequences = XmlSequenceReader("Sequences.xml").getSequences()
+
+    for sequence in sequences:
+      self.sequencesXml[sequence.attrib['name']] = []
+      sequenceCommands = self.sequencesXml[sequence.attrib['name']]
+
+      commands = list(sequence)
+      for command in commands:
+        atcmd = self.resolveCommand(command.find("atcmd").text)
+        response = command.find("response").text
+        waitBeforeNext = command.find("waitBeforeNext").text
+        timeout = command.find("timeout").text
+        
+        if (len(response) == 0) and (len(timeout) == 0) and (len(waitBeforeNext) == 0):
+          sequenceCommands.append(Command(atcmd))
+          continue
+        if (len(timeout) == 0) and (len(waitBeforeNext) == 0):
+          sequenceCommands.append(Command(atcmd, response))
+          continue
+        if (len(timeout) == 0):
+          sequenceCommands.append(Command(atcmd, response, waitBeforeNext))
+        else:
+          sequenceCommands.append(Command(atcmd, response, waitBeforeNext, timeout))
+          
+
+      
+  def resolveCommand(self, command):
+    pass
 
   def creg(self, code):
     return "+CREG: {0}".format(code)
